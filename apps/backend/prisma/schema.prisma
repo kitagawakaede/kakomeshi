@@ -13,8 +13,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  name  String
-  email String  @unique
+model SaleData {
+  saleDataId       Int   @id
+  userId           String
+  price            Int
+  universityName   String
+  facultyName      String
+  departmentName   String
+  className        String
+  explanation      String
+  Features1        String
+  Features2        String
+  Features3        String
+  someday          String
 }

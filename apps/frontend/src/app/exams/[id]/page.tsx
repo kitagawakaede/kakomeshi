@@ -1,14 +1,46 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 import { Button } from "@/app/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card"
 import { Badge } from "@/app/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs"
 import { ShoppingCart, GraduationCap, FileText, CheckCircle, BookOpen } from "lucide-react"
 
-export default function ExamDetailPage({ params }: { params: { id: string } }) {
-  // In a real application, you would fetch the exam data based on the ID
-  const examId = Number.parseInt(params.id)
-  const exam = examData.find((e) => e.id === examId) || examData[0]
+interface SaleData {
+  saleDataId: string
+  price: number
+  universityName: string
+  FacultyName: string
+  DepartmentName: string
+  className: string
+  explanation: string
+  Features1: string
+  Features2: string
+  Features3: string
+  someday: string
+  isNew?: boolean
+}
+
+export default function ExamDetailPage() {
+  const params = useParams()
+  const { id } = params as { id: string }
+  const [exam, setExam] = useState<SaleData | null>(null)
+
+  useEffect(() => {
+    if (!id) return
+    fetch(`http://localhost:3001/sale-data/${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setExam(data);
+        console.log("取得した詳細データ:", data);
+      })
+      .catch((err) => console.error("詳細データ取得エラー:", err))
+  }, [id])
+
+  if (!exam) return <div className="p-10 text-center text-muted-foreground">読み込み中...</div>
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,11 +70,13 @@ export default function ExamDetailPage({ params }: { params: { id: string } }) {
                 <Link href="/" className="text-sm text-muted-foreground hover:underline">
                   ← 検索結果に戻る
                 </Link>
-                <h1 className="mt-2 text-3xl font-bold">{exam.title}</h1>
+                <h1 className="mt-2 text-3xl font-bold">
+                  {exam.universityName} {exam.className}
+                </h1>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <Badge variant="outline">{exam.category}</Badge>
-                  <Badge variant="outline">{exam.subject}</Badge>
-                  <Badge variant="outline">{exam.year}年</Badge>
+                  <Badge variant="outline">{exam.FacultyName}</Badge>
+                  <Badge variant="outline">{exam.DepartmentName}</Badge>
+                  <Badge variant="outline">{exam.someday}</Badge>
                   {exam.isNew && <Badge>新着</Badge>}
                 </div>
               </div>
@@ -61,91 +95,26 @@ export default function ExamDetailPage({ params }: { params: { id: string } }) {
                 </TabsList>
                 <TabsContent value="description" className="p-4 border rounded-lg mt-2">
                   <div className="space-y-4">
-                    <p>
-                      {exam.title}
-                      の過去問題集です。本試験と同じ形式の問題を解くことで、実際の試験に備えることができます。
-                    </p>
-                    <p>
-                      この問題集には、詳細な解説と解答が含まれており、自己学習に最適です。また、出題傾向の分析や、よく出る問題のポイント解説も収録されています。
-                    </p>
+                    <p>{exam.explanation}</p>
                     <h3 className="text-lg font-semibold">特徴</h3>
                     <ul className="list-disc pl-5 space-y-1">
-                      <li>本試験と同じ形式・難易度の問題</li>
-                      <li>詳細な解説と解答</li>
-                      <li>出題傾向の分析</li>
-                      <li>よく出る問題のポイント解説</li>
-                      <li>PDF形式でダウンロード可能</li>
+                      {exam.Features1 && <li>{exam.Features1}</li>}
+                      {exam.Features2 && <li>{exam.Features2}</li>}
+                      {exam.Features3 && <li>{exam.Features3}</li>}
                     </ul>
                   </div>
                 </TabsContent>
                 <TabsContent value="contents" className="p-4 border rounded-lg mt-2">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">目次</h3>
-                    <ul className="space-y-2">
-                      <li className="flex items-start">
-                        <FileText className="w-5 h-5 mr-2 text-muted-foreground" />
-                        <span>第1章: 問題（本試験と同形式）</span>
-                      </li>
-                      <li className="flex items-start">
-                        <FileText className="w-5 h-5 mr-2 text-muted-foreground" />
-                        <span>第2章: 解答と詳細な解説</span>
-                      </li>
-                      <li className="flex items-start">
-                        <FileText className="w-5 h-5 mr-2 text-muted-foreground" />
-                        <span>第3章: 出題傾向の分析</span>
-                      </li>
-                      <li className="flex items-start">
-                        <FileText className="w-5 h-5 mr-2 text-muted-foreground" />
-                        <span>第4章: よく出る問題のポイント解説</span>
-                      </li>
-                      <li className="flex items-start">
-                        <FileText className="w-5 h-5 mr-2 text-muted-foreground" />
-                        <span>第5章: 参考資料</span>
-                      </li>
-                    </ul>
-                  </div>
+                  <h3 className="text-lg font-semibold">目次</h3>
+                  <ul className="space-y-2">
+                    <li className="flex items-start">
+                      <FileText className="w-5 h-5 mr-2 text-muted-foreground" />
+                      <span>問題・解答・解説</span>
+                    </li>
+                  </ul>
                 </TabsContent>
                 <TabsContent value="reviews" className="p-4 border rounded-lg mt-2">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold">レビュー</h3>
-                      <Badge variant="outline">平均評価: 4.5/5</Badge>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="p-4 border rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <div className="font-semibold">山田太郎</div>
-                          <div className="text-sm text-muted-foreground">2023年10月15日</div>
-                          <div className="flex">
-                            {Array(5)
-                              .fill(0)
-                              .map((_, i) => (
-                                <span key={i} className="text-yellow-500">
-                                  ★
-                                </span>
-                              ))}
-                          </div>
-                        </div>
-                        <p className="mt-2">解説がとても詳しく、理解しやすかったです。おかげで試験に合格できました！</p>
-                      </div>
-                      <div className="p-4 border rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <div className="font-semibold">佐藤花子</div>
-                          <div className="text-sm text-muted-foreground">2023年9月22日</div>
-                          <div className="flex">
-                            {Array(4)
-                              .fill(0)
-                              .map((_, i) => (
-                                <span key={i} className="text-yellow-500">
-                                  ★
-                                </span>
-                              ))}
-                          </div>
-                        </div>
-                        <p className="mt-2">出題傾向の分析が役立ちました。もう少し問題数が多いとさらに良かったです。</p>
-                      </div>
-                    </div>
-                  </div>
+                  <p>レビュー機能は現在準備中です。</p>
                 </TabsContent>
               </Tabs>
             </div>
@@ -171,10 +140,6 @@ export default function ExamDetailPage({ params }: { params: { id: string } }) {
                     <CheckCircle className="w-5 h-5 text-green-500" />
                     <span>解答・解説付き</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    <span>印刷可能</span>
-                  </div>
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col gap-2">
@@ -190,86 +155,6 @@ export default function ExamDetailPage({ params }: { params: { id: string } }) {
           </div>
         </div>
       </main>
-
-      <footer className="py-6 border-t">
-        <div className="container px-4 mx-auto">
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-sm text-muted-foreground">&copy; 2024 過去問マスター. All rights reserved.</p>
-            <div className="flex gap-4 text-sm">
-              <Link href="/about" className="text-muted-foreground hover:underline">
-                会社概要
-              </Link>
-              <Link href="/terms" className="text-muted-foreground hover:underline">
-                利用規約
-              </Link>
-              <Link href="/privacy" className="text-muted-foreground hover:underline">
-                プライバシーポリシー
-              </Link>
-              <Link href="/contact" className="text-muted-foreground hover:underline">
-                お問い合わせ
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
-
-// Sample data
-const examData = [
-  {
-    id: 1,
-    title: "東京大学 2023年度 前期試験 数学",
-    category: "大学入試",
-    subject: "数学",
-    year: 2023,
-    price: 1200,
-    isNew: true,
-  },
-  {
-    id: 2,
-    title: "京都大学 2023年度 一般入試 英語",
-    category: "大学入試",
-    subject: "英語",
-    year: 2023,
-    price: 1200,
-    isNew: true,
-  },
-  {
-    id: 3,
-    title: "センター試験 2022年度 国語",
-    category: "大学入試",
-    subject: "国語",
-    year: 2022,
-    price: 980,
-    isNew: false,
-  },
-  {
-    id: 4,
-    title: "TOEIC 公式問題集 2023",
-    category: "語学試験",
-    subject: "英語",
-    year: 2023,
-    price: 3500,
-    isNew: true,
-  },
-  {
-    id: 5,
-    title: "基本情報技術者試験 2022年度 春期",
-    category: "資格試験",
-    subject: "IT",
-    year: 2022,
-    price: 1500,
-    isNew: false,
-  },
-  {
-    id: 6,
-    title: "日本史検定 2級 2022年度",
-    category: "資格試験",
-    subject: "社会",
-    year: 2022,
-    price: 1800,
-    isNew: false,
-  },
-]
