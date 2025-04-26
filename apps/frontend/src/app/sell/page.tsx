@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/app/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
@@ -13,9 +14,34 @@ import { Switch } from "@/app/components/ui/switch"
 import { Badge } from "@/app/components/ui/badge"
 import { Label } from "@/app/components/ui/label"
 import { GraduationCap, Upload, FileText, HelpCircle, ShoppingCart, BookOpen, AlertCircle, Info } from "lucide-react"
+import { useToast } from "@/app/components/ui/use-toast"
 
 export default function SellPage() {
+  const router = useRouter()
+  const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("basic")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formData, setFormData] = useState({
+    title: "",
+    universityName: "",
+    facultyName: "",
+    departmentName: "",
+    yearValue: "",
+    explanation: "",
+    features1: "",
+    features2: "",
+    features3: "",
+    hasAnswers: false,
+    hasCommentary: false,
+    price: 1000,
+    isPublic: true,
+    fileUploaded: false,
+    fileName: "",
+    filePath: "",
+    fileSize: 0,
+    fileType: ""
+  })
+  const [dragging, setDragging] = useState(false);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value)
@@ -36,6 +62,179 @@ export default function SellPage() {
       setActiveTab("content")
     }
   }
+
+  const handleInputChange = (field: string, value: string | number | boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true)
+      
+      // 必須項目の検証
+      if (!formData.title || !formData.universityName || !formData.facultyName || !formData.departmentName || !formData.explanation || !formData.price) {
+        toast({
+          title: "入力エラー",
+          description: "必須項目をすべて入力してください",
+          variant: "destructive"
+        })
+        setIsSubmitting(false)
+        return
+      }
+
+      if (!formData.fileUploaded) {
+        toast({
+          title: "ファイルエラー",
+          description: "過去問ファイルをアップロードしてください",
+          variant: "destructive"
+        })
+        setIsSubmitting(false)
+        return
+      }
+
+      // APIリクエストの作成
+      const requestData = {
+        userId: "user123",
+        price: formData.price,
+        universityName: formData.universityName,
+        facultyName: formData.facultyName,
+        departmentName: formData.departmentName,
+        className: formData.title,
+        explanation: formData.explanation,
+        Features1: formData.features1 || "詳細情報なし",
+        Features2: formData.features2 || "詳細情報なし",
+        Features3: formData.features3 || "詳細情報なし",
+        someday: formData.yearValue || "不明",
+        filePath: formData.filePath
+      }
+
+      // デバッグ用ログ
+      console.log('出品データを送信します:', requestData);
+
+      try {
+        // APIエンドポイントに送信
+        const response = await fetch('/api/sell', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
+        });
+
+        let responseText = await response.text();
+        console.log('API response text:', responseText);
+
+        if (!response.ok) {
+          let errorData;
+          try {
+            errorData = JSON.parse(responseText);
+          } catch (e) {
+            errorData = { error: responseText || '不明なエラー' };
+          }
+          throw new Error(errorData.error || '出品に失敗しました');
+        }
+
+        // 成功処理
+        toast({
+          title: "出品が完了しました",
+          description: "審査後に公開されます",
+        });
+
+        // ホームページにリダイレクト
+        router.push('/');
+      } catch (fetchError) {
+        console.error('API通信エラー:', fetchError);
+        toast({
+          title: "API通信エラー",
+          description: fetchError instanceof Error ? fetchError.message : "サーバーとの通信に失敗しました",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('出品処理エラー:', error);
+      toast({
+        title: "エラーが発生しました",
+        description: "入力内容を確認してもう一度お試しください",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(true);
+  };
+  
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(false);
+  };
+  
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      await uploadFile(file);
+    }
+  };
+  
+  // 共通のファイルアップロード処理
+  const uploadFile = async (file: File) => {
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', file);
+    
+    try {
+      const response = await fetch('http://localhost:3001/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('ファイルのアップロードに失敗しました');
+      }
+      
+      const result = await response.json();
+      
+      setFormData(prev => ({
+        ...prev,
+        fileUploaded: true,
+        fileName: file.name,
+        filePath: result.filename,
+        fileSize: file.size,
+        fileType: file.type
+      }));
+      
+      toast({
+        title: "ファイルがアップロードされました",
+      });
+    } catch (error) {
+      console.error('ファイルアップロードエラー:', error);
+      toast({
+        title: "エラー",
+        description: "ファイルのアップロードに失敗しました",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // 実際のファイルアップロード処理
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    await uploadFile(file);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50">
@@ -126,81 +325,67 @@ export default function SellPage() {
                         id="title"
                         placeholder="例：東京大学 2023年度 前期試験 数学"
                         className="border-blue-200 focus-visible:ring-blue-300"
+                        value={formData.title}
+                        onChange={(e) => handleInputChange('title', e.target.value)}
                       />
                       <p className="text-xs text-muted-foreground">具体的なタイトルを入力してください（最大100文字）</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="exam-type">
-                          試験タイプ <span className="text-red-500">*</span>
+                        <Label htmlFor="university">
+                          大学 <span className="text-red-500">*</span>
                         </Label>
-                        <Select>
-                          <SelectTrigger id="exam-type" className="border-blue-200 focus-visible:ring-blue-300">
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="university">大学入試</SelectItem>
-                            <SelectItem value="highschool">高校入試</SelectItem>
-                            <SelectItem value="certification">資格試験</SelectItem>
-                            <SelectItem value="language">語学試験</SelectItem>
-                            <SelectItem value="other">その他</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Input 
+                          id="university" 
+                          placeholder="例：東京大学" 
+                          className="border-blue-200 focus-visible:ring-blue-300"
+                          value={formData.universityName}
+                          onChange={(e) => handleInputChange('universityName', e.target.value)}
+                        />
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="subject">
-                          科目 <span className="text-red-500">*</span>
+                        <Label htmlFor="faculty">
+                          学部 <span className="text-red-500">*</span>
                         </Label>
-                        <Select>
-                          <SelectTrigger id="subject" className="border-blue-200 focus-visible:ring-blue-300">
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="math">数学</SelectItem>
-                            <SelectItem value="japanese">国語</SelectItem>
-                            <SelectItem value="english">英語</SelectItem>
-                            <SelectItem value="science">理科</SelectItem>
-                            <SelectItem value="social">社会</SelectItem>
-                            <SelectItem value="it">IT</SelectItem>
-                            <SelectItem value="law">法律</SelectItem>
-                            <SelectItem value="other">その他</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Input 
+                          id="faculty" 
+                          placeholder="例：理学部" 
+                          className="border-blue-200 focus-visible:ring-blue-300"
+                          value={formData.facultyName}
+                          onChange={(e) => handleInputChange('facultyName', e.target.value)}
+                        />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="year">
-                          年度 <span className="text-red-500">*</span>
+                        <Label htmlFor="department">
+                          学科 <span className="text-red-500">*</span>
                         </Label>
-                        <Select>
-                          <SelectTrigger id="year" className="border-blue-200 focus-visible:ring-blue-300">
+                        <Input 
+                          id="department" 
+                          placeholder="例：物理学科" 
+                          className="border-blue-200 focus-visible:ring-blue-300"
+                          value={formData.departmentName}
+                          onChange={(e) => handleInputChange('departmentName', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="year">年度</Label>
+                        <Select onValueChange={(value: string) => handleInputChange('yearValue', value)}>
+                          <SelectTrigger id="year" className="border-blue-200 focus-visible:ring-blue-300 bg-white">
                             <SelectValue placeholder="選択してください" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-white">
                             <SelectItem value="2024">2024年</SelectItem>
                             <SelectItem value="2023">2023年</SelectItem>
                             <SelectItem value="2022">2022年</SelectItem>
                             <SelectItem value="2021">2021年</SelectItem>
                             <SelectItem value="2020">2020年</SelectItem>
                             <SelectItem value="older">2019年以前</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid gap-2">
-                        <Label htmlFor="difficulty">難易度</Label>
-                        <Select>
-                          <SelectTrigger id="difficulty" className="border-blue-200 focus-visible:ring-blue-300">
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="beginner">初級</SelectItem>
-                            <SelectItem value="intermediate">中級</SelectItem>
-                            <SelectItem value="advanced">上級</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -214,21 +399,11 @@ export default function SellPage() {
                         id="description"
                         placeholder="過去問の内容、特徴、解説の有無などを詳しく記入してください。"
                         className="min-h-32 border-blue-200 focus-visible:ring-blue-300"
+                        value={formData.explanation}
+                        onChange={(e) => handleInputChange('explanation', e.target.value)}
                       />
                       <p className="text-xs text-muted-foreground">
                         購入者が内容を理解できるよう、詳細な説明を入力してください（最大1000文字）
-                      </p>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="tags">タグ（カンマ区切りで入力）</Label>
-                      <Input
-                        id="tags"
-                        placeholder="例：センター試験, 理系, 難問"
-                        className="border-blue-200 focus-visible:ring-blue-300"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        検索で見つけやすくするためのタグを入力してください（最大10個）
                       </p>
                     </div>
                   </div>
@@ -252,58 +427,80 @@ export default function SellPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid gap-6">
-                    <div className="border-2 border-dashed border-blue-200 rounded-lg p-8 text-center bg-blue-50/50">
+                    <div 
+                      className={`border-2 border-dashed ${dragging ? 'border-blue-400 bg-blue-50' : 'border-blue-200 bg-blue-50/50'} rounded-lg p-8 text-center transition-colors`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
                       <div className="flex flex-col items-center gap-2">
-                        <Upload className="w-10 h-10 text-blue-500" />
+                        <Upload className={`w-10 h-10 ${dragging ? 'text-blue-600' : 'text-blue-500'} transition-colors`} />
                         <h3 className="font-semibold text-lg">ファイルをドラッグ＆ドロップ</h3>
                         <p className="text-sm text-muted-foreground mb-4">または</p>
-                        <Button className="bg-blue-600 hover:bg-blue-700">ファイルを選択</Button>
+                        <label htmlFor="fileUpload" className="cursor-pointer">
+                          <input
+                            id="fileUpload"
+                            type="file"
+                            className="hidden"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            onChange={handleFileUpload}
+                          />
+                          <Button className="bg-blue-600 hover:bg-blue-700" type="button" onClick={() => document.getElementById('fileUpload')?.click()}>
+                            ファイルを選択
+                          </Button>
+                        </label>
                         <p className="text-xs text-muted-foreground mt-4">PDF, DOC, DOCX, JPG, PNG形式（最大50MB）</p>
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <h3 className="font-semibold">アップロード済みファイル</h3>
-                      <div className="border rounded-lg p-4 flex items-center justify-between bg-white">
-                        <div className="flex items-center gap-3">
-                          <FileText className="w-8 h-8 text-blue-500" />
-                          <div>
-                            <p className="font-medium">東大数学2023.pdf</p>
-                            <p className="text-xs text-muted-foreground">2.4 MB • PDF</p>
+                    {formData.fileUploaded && (
+                      <div className="space-y-4">
+                        <h3 className="font-semibold">アップロード済みファイル</h3>
+                        <div className="border rounded-lg p-4 flex items-center bg-white">
+                          <div className="flex items-center gap-3">
+                            <FileText className="w-8 h-8 text-blue-500" />
+                            <div>
+                              <p className="font-medium">{formData.fileName}</p>
+                              <p className="text-xs text-muted-foreground">{Math.round(formData.fileSize / 1024)} KB • {formData.fileType.split('/')[1]?.toUpperCase()}</p>
+                            </div>
                           </div>
                         </div>
-                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
-                          削除
-                        </Button>
                       </div>
-                    </div>
+                    )}
 
                     <Separator />
 
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor="has-answers">解答・解説の有無</Label>
-                          <HelpCircle className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <Switch id="has-answers" />
+                      <h3 className="font-semibold">詳細情報</h3>
+                      <div className="grid gap-2">
+                        <Label htmlFor="features1">詳細情報1</Label>
+                        <Input 
+                          id="features1" 
+                          placeholder="例：解答の正確さ、難易度など" 
+                          className="border-blue-200 focus-visible:ring-blue-300"
+                          value={formData.features1}
+                          onChange={(e) => handleInputChange('features1', e.target.value)}
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          解答・解説が含まれている場合は「解答あり」と入力してください。
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        解答・解説が含まれている場合はオンにしてください。含まれている場合は価格を高く設定できます。
-                      </p>
                     </div>
 
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor="has-commentary">詳細な解説の有無</Label>
-                          <HelpCircle className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <Switch id="has-commentary" />
+                      <div className="grid gap-2">
+                        <Label htmlFor="features2">詳細情報2</Label>
+                        <Input 
+                          id="features2" 
+                          placeholder="例：詳細な解説の内容、ポイントなど" 
+                          className="border-blue-200 focus-visible:ring-blue-300"
+                          value={formData.features2}
+                          onChange={(e) => handleInputChange('features2', e.target.value)}
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          詳細な解説（解法のステップや考え方の説明など）が含まれている場合は「詳細解説あり」と入力してください。
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        詳細な解説（解法のステップや考え方の説明など）が含まれている場合はオンにしてください。
-                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -341,21 +538,23 @@ export default function SellPage() {
                           type="number"
                           placeholder="1000"
                           className="pl-8 border-blue-200 focus-visible:ring-blue-300"
+                          value={formData.price}
+                          onChange={(e) => handleInputChange('price', parseInt(e.target.value) || 0)}
                         />
                       </div>
                       <div className="bg-blue-50 p-4 rounded-lg mt-2">
                         <div className="flex justify-between text-sm mb-2">
                           <span>販売価格</span>
-                          <span>¥1,000</span>
+                          <span>¥{formData.price.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between text-sm mb-2">
                           <span>プラットフォーム手数料（30%）</span>
-                          <span className="text-red-500">- ¥300</span>
+                          <span className="text-red-500">- ¥{Math.round(formData.price * 0.3).toLocaleString()}</span>
                         </div>
                         <Separator className="my-2" />
                         <div className="flex justify-between font-semibold">
                           <span>あなたの収益</span>
-                          <span className="text-green-600">¥700</span>
+                          <span className="text-green-600">¥{Math.round(formData.price * 0.7).toLocaleString()}</span>
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground">
@@ -367,12 +566,16 @@ export default function SellPage() {
 
                     <div className="space-y-4">
                       <h3 className="font-semibold">公開設定</h3>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="is-public">公開状態</Label>
-                          <p className="text-sm text-muted-foreground">オンにすると審査後に公開されます</p>
-                        </div>
-                        <Switch id="is-public" />
+                      <div className="grid gap-2">
+                        <Label htmlFor="features3">詳細情報3</Label>
+                        <Input 
+                          id="features3" 
+                          placeholder="例：その他の特徴、注意事項など" 
+                          className="border-blue-200 focus-visible:ring-blue-300"
+                          value={formData.features3}
+                          onChange={(e) => handleInputChange('features3', e.target.value)}
+                        />
+                        <p className="text-sm text-muted-foreground">公開/非公開に関する情報を入力してください。</p>
                       </div>
                     </div>
 
@@ -387,16 +590,16 @@ export default function SellPage() {
                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                               <div>
                                 <div className="flex items-center gap-2 mb-1">
-                                  <Badge variant="university">大学入試</Badge>
-                                  <Badge variant="outline">数学</Badge>
+                                  <Badge variant="university">{formData.universityName || "大学入試"}</Badge>
+                                  <Badge variant="outline">{formData.facultyName || "学部"}</Badge>
                                   <Badge variant="success">新着</Badge>
                                 </div>
-                                <h3 className="text-lg font-semibold">東京大学 2023年度 前期試験 数学</h3>
+                                <h3 className="text-lg font-semibold">{formData.title || "タイトル未設定"}</h3>
                                 <div className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                                  東京大学の2023年度前期試験の数学問題と詳細な解説が含まれています。解法のステップや考え方の説明も記載されています。
+                                  {formData.explanation || "説明文がありません"}
                                 </div>
                               </div>
-                              <div className="text-lg font-bold">¥1,000</div>
+                              <div className="text-lg font-bold">¥{formData.price.toLocaleString()}</div>
                             </div>
                           </div>
                         </div>
@@ -412,7 +615,13 @@ export default function SellPage() {
                   >
                     戻る：コンテンツ
                   </Button>
-                  <Button className="bg-green-600 hover:bg-green-700">出品する</Button>
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700" 
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "処理中..." : "出品する"}
+                  </Button>
                 </CardFooter>
               </Card>
             </TabsContent>

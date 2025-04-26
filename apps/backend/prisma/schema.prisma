@@ -26,4 +26,5 @@ model SaleData {
   Features2        String
   Features3        String
   someday          String
+  filePath         String?
 }
