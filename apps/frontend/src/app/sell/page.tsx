@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/app/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card"
@@ -16,9 +16,69 @@ import { GraduationCap, Upload, FileText, HelpCircle, ShoppingCart, BookOpen, Al
 
 export default function SellPage() {
   const [activeTab, setActiveTab] = useState("basic")
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [isDragging, setIsDragging] = useState(false)
+  const [hasAnswers, setHasAnswers] = useState(false)
+  const [hasCommentary, setHasCommentary] = useState(false)
+  const [price, setPrice] = useState<number>(0)
+  const [title, setTitle] = useState("")
+  const [universityName, setUniversityName] = useState("")
+  const [facultyName, setFacultyName] = useState("")
+  const [departmentName, setDepartmentName] = useState("")
+  const [graduationYear, setGraduationYear] = useState("")
+  const [description, setDescription] = useState("")
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const calculateFee = (price: number) => {
+    return Math.floor(price * 0.3)
+  }
+
+  const calculateEarnings = (price: number) => {
+    return price - calculateFee(price)
+  }
+
+  const formatPrice = (price: number) => {
+    return price.toLocaleString('ja-JP')
+  }
 
   const handleTabChange = (value: string) => {
     setActiveTab(value)
+  }
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (files) {
+      const newFiles = Array.from(files)
+      setUploadedFiles(prev => [...prev, ...newFiles])
+    }
+  }
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault()
+    setIsDragging(false)
+    const files = event.dataTransfer.files
+    if (files) {
+      const newFiles = Array.from(files)
+      setUploadedFiles(prev => [...prev, ...newFiles])
+    }
+  }
+
+  const handleRemoveFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
   }
 
   const goToNextTab = (current: string) => {
@@ -126,6 +186,8 @@ export default function SellPage() {
                         id="title"
                         placeholder="例：東京大学 2023年度 前期試験 数学"
                         className="border-blue-200 focus-visible:ring-blue-300"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
                       />
                       <p className="text-xs text-muted-foreground">具体的なタイトルを入力してください（最大100文字）</p>
                     </div>
@@ -133,76 +195,54 @@ export default function SellPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="grid gap-2">
                         <Label htmlFor="exam-type">
-                          試験タイプ <span className="text-red-500">*</span>
+                          大学名 <span className="text-red-500">*</span>
                         </Label>
-                        <Select>
-                          <SelectTrigger id="exam-type" className="border-blue-200 focus-visible:ring-blue-300">
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="university">大学入試</SelectItem>
-                            <SelectItem value="highschool">高校入試</SelectItem>
-                            <SelectItem value="certification">資格試験</SelectItem>
-                            <SelectItem value="language">語学試験</SelectItem>
-                            <SelectItem value="other">その他</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Input
+                          id="exam-type"
+                          placeholder="例：東京大学"
+                          className="border-blue-200 focus-visible:ring-blue-300"
+                          value={universityName}
+                          onChange={(e) => setUniversityName(e.target.value)}
+                        />
                       </div>
 
                       <div className="grid gap-2">
                         <Label htmlFor="subject">
-                          科目 <span className="text-red-500">*</span>
+                          学部 <span className="text-red-500">*</span>
                         </Label>
-                        <Select>
-                          <SelectTrigger id="subject" className="border-blue-200 focus-visible:ring-blue-300">
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="math">数学</SelectItem>
-                            <SelectItem value="japanese">国語</SelectItem>
-                            <SelectItem value="english">英語</SelectItem>
-                            <SelectItem value="science">理科</SelectItem>
-                            <SelectItem value="social">社会</SelectItem>
-                            <SelectItem value="it">IT</SelectItem>
-                            <SelectItem value="law">法律</SelectItem>
-                            <SelectItem value="other">その他</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Input
+                          id="subject"
+                          placeholder="例：工学部"
+                          className="border-blue-200 focus-visible:ring-blue-300"
+                          value={facultyName}
+                          onChange={(e) => setFacultyName(e.target.value)}
+                        />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="grid gap-2">
                         <Label htmlFor="year">
-                          年度 <span className="text-red-500">*</span>
+                          学科 <span className="text-red-500">*</span>
                         </Label>
-                        <Select>
-                          <SelectTrigger id="year" className="border-blue-200 focus-visible:ring-blue-300">
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="2024">2024年</SelectItem>
-                            <SelectItem value="2023">2023年</SelectItem>
-                            <SelectItem value="2022">2022年</SelectItem>
-                            <SelectItem value="2021">2021年</SelectItem>
-                            <SelectItem value="2020">2020年</SelectItem>
-                            <SelectItem value="older">2019年以前</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Input
+                          id="year"
+                          placeholder="例：情報工学科"
+                          className="border-blue-200 focus-visible:ring-blue-300"
+                          value={departmentName}
+                          onChange={(e) => setDepartmentName(e.target.value)}
+                        />
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="difficulty">難易度</Label>
-                        <Select>
-                          <SelectTrigger id="difficulty" className="border-blue-200 focus-visible:ring-blue-300">
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="beginner">初級</SelectItem>
-                            <SelectItem value="intermediate">中級</SelectItem>
-                            <SelectItem value="advanced">上級</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Label htmlFor="difficulty">卒業年度</Label>
+                        <Input
+                          id="difficulty"
+                          placeholder="例：2024年"
+                          className="border-blue-200 focus-visible:ring-blue-300"
+                          value={graduationYear}
+                          onChange={(e) => setGraduationYear(e.target.value)}
+                        />
                       </div>
                     </div>
 
@@ -214,21 +254,11 @@ export default function SellPage() {
                         id="description"
                         placeholder="過去問の内容、特徴、解説の有無などを詳しく記入してください。"
                         className="min-h-32 border-blue-200 focus-visible:ring-blue-300"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
                       />
                       <p className="text-xs text-muted-foreground">
                         購入者が内容を理解できるよう、詳細な説明を入力してください（最大1000文字）
-                      </p>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="tags">タグ（カンマ区切りで入力）</Label>
-                      <Input
-                        id="tags"
-                        placeholder="例：センター試験, 理系, 難問"
-                        className="border-blue-200 focus-visible:ring-blue-300"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        検索で見つけやすくするためのタグを入力してください（最大10個）
                       </p>
                     </div>
                   </div>
@@ -237,7 +267,7 @@ export default function SellPage() {
                 <Button asChild variant="outline" className="border-blue-200 hover:bg-blue-50">
                     <Link href="/">ホームに戻る</Link>
                 </Button>
-                  <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => goToNextTab("basic")}>
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => goToNextTab("basic")}>
                     次へ：コンテンツ
                   </Button>
                 </CardFooter>
@@ -252,59 +282,70 @@ export default function SellPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid gap-6">
-                    <div className="border-2 border-dashed border-blue-200 rounded-lg p-8 text-center bg-blue-50/50">
+                    <div 
+                      className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                        isDragging 
+                          ? 'border-blue-400 bg-blue-50' 
+                          : 'border-blue-200 bg-blue-50/50'
+                      }`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
                       <div className="flex flex-col items-center gap-2">
                         <Upload className="w-10 h-10 text-blue-500" />
                         <h3 className="font-semibold text-lg">ファイルをドラッグ＆ドロップ</h3>
                         <p className="text-sm text-muted-foreground mb-4">または</p>
-                        <Button className="bg-blue-600 hover:bg-blue-700">ファイルを選択</Button>
-                        <p className="text-xs text-muted-foreground mt-4">PDF, DOC, DOCX, JPG, PNG形式（最大50MB）</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <h3 className="font-semibold">アップロード済みファイル</h3>
-                      <div className="border rounded-lg p-4 flex items-center justify-between bg-white">
-                        <div className="flex items-center gap-3">
-                          <FileText className="w-8 h-8 text-blue-500" />
-                          <div>
-                            <p className="font-medium">東大数学2023.pdf</p>
-                            <p className="text-xs text-muted-foreground">2.4 MB • PDF</p>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
-                          削除
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileSelect}
+                          multiple
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          className="hidden"
+                        />
+                        <Button 
+                          className="bg-blue-600 hover:bg-blue-700"
+                          onClick={handleUploadClick}
+                        >
+                          ファイルを選択
                         </Button>
+                        <p className="text-xs text-muted-foreground mt-4">
+                          PDF, DOC, DOCX, JPG, PNG形式（最大50MB）
+                        </p>
                       </div>
                     </div>
 
+                    {uploadedFiles.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className="font-semibold">アップロード済みファイル</h3>
+                        {uploadedFiles.map((file, index) => (
+                          <div 
+                            key={index}
+                            className="border rounded-lg p-4 flex items-center justify-between bg-white"
+                          >
+                            <div className="flex items-center gap-3">
+                              <FileText className="w-8 h-8 text-blue-500" />
+                              <div>
+                                <p className="font-medium">{file.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {(file.size / (1024 * 1024)).toFixed(1)} MB • {file.type.split('/')[1].toUpperCase()}
+                                </p>
+                              </div>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => handleRemoveFile(index)}
+                            >
+                              削除
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <Separator />
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor="has-answers">解答・解説の有無</Label>
-                          <HelpCircle className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <Switch id="has-answers" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        解答・解説が含まれている場合はオンにしてください。含まれている場合は価格を高く設定できます。
-                      </p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor="has-commentary">詳細な解説の有無</Label>
-                          <HelpCircle className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <Switch id="has-commentary" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        詳細な解説（解法のステップや考え方の説明など）が含まれている場合はオンにしてください。
-                      </p>
-                    </div>
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-between">
@@ -315,8 +356,8 @@ export default function SellPage() {
                   >
                     戻る：基本情報
                   </Button>
-                  <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => goToNextTab("content")}>
-                    次へ：価格・公開設定
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => goToNextTab("content")}>
+                    次へ：価格
                   </Button>
                 </CardFooter>
               </Card>
@@ -325,7 +366,7 @@ export default function SellPage() {
             <TabsContent value="price" className="mt-6 space-y-6">
               <Card className="border-blue-100">
                 <CardHeader>
-                  <CardTitle>価格・公開設定</CardTitle>
+                  <CardTitle>価格</CardTitle>
                   <CardDescription>販売価格と公開設定を行ってください。</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -340,22 +381,24 @@ export default function SellPage() {
                           id="price"
                           type="number"
                           placeholder="1000"
+                          value={price || ''}
+                          onChange={(e) => setPrice(Number(e.target.value))}
                           className="pl-8 border-blue-200 focus-visible:ring-blue-300"
                         />
                       </div>
                       <div className="bg-blue-50 p-4 rounded-lg mt-2">
                         <div className="flex justify-between text-sm mb-2">
                           <span>販売価格</span>
-                          <span>¥1,000</span>
+                          <span>¥{formatPrice(price)}</span>
                         </div>
                         <div className="flex justify-between text-sm mb-2">
                           <span>プラットフォーム手数料（30%）</span>
-                          <span className="text-red-500">- ¥300</span>
+                          <span className="text-red-500">- ¥{formatPrice(calculateFee(price))}</span>
                         </div>
                         <Separator className="my-2" />
                         <div className="flex justify-between font-semibold">
                           <span>あなたの収益</span>
-                          <span className="text-green-600">¥700</span>
+                          <span className="text-green-600">¥{formatPrice(calculateEarnings(price))}</span>
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground">
@@ -364,17 +407,6 @@ export default function SellPage() {
                     </div>
 
                     <Separator />
-
-                    <div className="space-y-4">
-                      <h3 className="font-semibold">公開設定</h3>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="is-public">公開状態</Label>
-                          <p className="text-sm text-muted-foreground">オンにすると審査後に公開されます</p>
-                        </div>
-                        <Switch id="is-public" />
-                      </div>
-                    </div>
 
                     <div className="space-y-4">
                       <h3 className="font-semibold">プレビュー</h3>
@@ -388,15 +420,20 @@ export default function SellPage() {
                               <div>
                                 <div className="flex items-center gap-2 mb-1">
                                   <Badge variant="university">大学入試</Badge>
-                                  <Badge variant="outline">数学</Badge>
-                                  <Badge variant="success">新着</Badge>
+                                  {facultyName && <Badge variant="outline">{facultyName}</Badge>}
+                                  {uploadedFiles.length > 0 && <Badge variant="success">新着</Badge>}
                                 </div>
-                                <h3 className="text-lg font-semibold">東京大学 2023年度 前期試験 数学</h3>
+                                <h3 className="text-lg font-semibold">{title || "タイトルを入力してください"}</h3>
                                 <div className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                                  東京大学の2023年度前期試験の数学問題と詳細な解説が含まれています。解法のステップや考え方の説明も記載されています。
+                                  {description || "説明を入力してください"}
+                                </div>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  {universityName && <Badge variant="outline">{universityName}</Badge>}
+                                  {departmentName && <Badge variant="outline">{departmentName}</Badge>}
+                                  {graduationYear && <Badge variant="outline">{graduationYear}</Badge>}
                                 </div>
                               </div>
-                              <div className="text-lg font-bold">¥1,000</div>
+                              <div className="text-lg font-bold">¥{formatPrice(price)}</div>
                             </div>
                           </div>
                         </div>
@@ -412,7 +449,7 @@ export default function SellPage() {
                   >
                     戻る：コンテンツ
                   </Button>
-                  <Button className="bg-green-600 hover:bg-green-700">出品する</Button>
+                  <Button className="bg-green-600 hover:bg-green-700 text-white">出品する</Button>
                 </CardFooter>
               </Card>
             </TabsContent>

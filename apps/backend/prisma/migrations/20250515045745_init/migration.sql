@@ -1,17 +1,6 @@
-/*
-  Warnings:
-
-  - You are about to drop the `User` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropTable
-PRAGMA foreign_keys=off;
-DROP TABLE "User";
-PRAGMA foreign_keys=on;
-
 -- CreateTable
 CREATE TABLE "SaleData" (
-    "saleDataId" TEXT NOT NULL PRIMARY KEY,
+    "saleDataId" INTEGER NOT NULL,
     "userId" TEXT NOT NULL,
     "price" INTEGER NOT NULL,
     "universityName" TEXT NOT NULL,
@@ -22,5 +11,7 @@ CREATE TABLE "SaleData" (
     "Features1" TEXT NOT NULL,
     "Features2" TEXT NOT NULL,
     "Features3" TEXT NOT NULL,
-    "someday" TEXT NOT NULL
+    "someday" TEXT NOT NULL,
+
+    CONSTRAINT "SaleData_pkey" PRIMARY KEY ("saleDataId")
 );

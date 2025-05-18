@@ -9,21 +9,22 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model SaleData {
-  saleDataId       Int   @id
-  userId           String
-  price            Int
-  universityName   String
-  facultyName      String
-  departmentName   String
-  className        String
-  explanation      String
-  Features1        String
-  Features2        String
-  Features3        String
-  someday          String
+  id              Int      @id @default(autoincrement())
+  title           String
+  universityName  String
+  facultyName     String
+  departmentName  String
+  graduationYear  String
+  examUrl         String
+  price           Int
+  description     String   @db.Text
+  fileFormat      String   @default("PDF")
+  hasAnswer       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
