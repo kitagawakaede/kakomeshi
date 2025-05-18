@@ -10,18 +10,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/ta
 import { ShoppingCart, GraduationCap, FileText, CheckCircle, BookOpen } from "lucide-react"
 
 interface SaleData {
-  saleDataId: string
-  price: number
+  id: number
+  title: string
   universityName: string
-  FacultyName: string
-  DepartmentName: string
-  className: string
-  explanation: string
-  Features1: string
-  Features2: string
-  Features3: string
-  someday: string
-  isNew?: boolean
+  facultyName: string
+  departmentName: string
+  graduationYear: string
+  examUrl: string
+  price: number
+  description: string
+  fileFormat: string
+  hasAnswer: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export default function ExamDetailPage() {
@@ -71,13 +72,16 @@ export default function ExamDetailPage() {
                   ← 検索結果に戻る
                 </Link>
                 <h1 className="mt-2 text-3xl font-bold">
-                  {exam.universityName} {exam.className}
+                  {exam.title}
                 </h1>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <Badge variant="outline">{exam.FacultyName}</Badge>
-                  <Badge variant="outline">{exam.DepartmentName}</Badge>
-                  <Badge variant="outline">{exam.someday}</Badge>
-                  {exam.isNew && <Badge>新着</Badge>}
+                  <Badge variant="outline">{exam.universityName}</Badge>
+                  <Badge variant="outline">{exam.facultyName}</Badge>
+                  <Badge variant="outline">{exam.departmentName}</Badge>
+                  <Badge variant="outline">{exam.graduationYear}</Badge>
+                  {new Date(exam.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000 && (
+                    <Badge variant="success">新着</Badge>
+                  )}
                 </div>
               </div>
 
@@ -90,31 +94,12 @@ export default function ExamDetailPage() {
               <Tabs defaultValue="description">
                 <TabsList>
                   <TabsTrigger value="description">商品説明</TabsTrigger>
-                  <TabsTrigger value="contents">目次</TabsTrigger>
-                  <TabsTrigger value="reviews">レビュー</TabsTrigger>
                 </TabsList>
                 <TabsContent value="description" className="p-4 border rounded-lg mt-2">
                   <div className="space-y-4">
-                    <p>{exam.explanation}</p>
-                    <h3 className="text-lg font-semibold">特徴</h3>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {exam.Features1 && <li>{exam.Features1}</li>}
-                      {exam.Features2 && <li>{exam.Features2}</li>}
-                      {exam.Features3 && <li>{exam.Features3}</li>}
-                    </ul>
+                    <h3 className="text-lg font-semibold">商品説明</h3>
+                    <p className="text-muted-foreground">{exam.description}</p>
                   </div>
-                </TabsContent>
-                <TabsContent value="contents" className="p-4 border rounded-lg mt-2">
-                  <h3 className="text-lg font-semibold">目次</h3>
-                  <ul className="space-y-2">
-                    <li className="flex items-start">
-                      <FileText className="w-5 h-5 mr-2 text-muted-foreground" />
-                      <span>問題・解答・解説</span>
-                    </li>
-                  </ul>
-                </TabsContent>
-                <TabsContent value="reviews" className="p-4 border rounded-lg mt-2">
-                  <p>レビュー機能は現在準備中です。</p>
                 </TabsContent>
               </Tabs>
             </div>
@@ -123,23 +108,21 @@ export default function ExamDetailPage() {
           <div>
             <Card className="sticky top-24">
               <CardHeader>
-                <CardTitle className="text-2xl font-bold">¥{exam.price.toLocaleString()}</CardTitle>
+                <CardTitle className="text-2xl font-bold">¥{exam.price.toLocaleString() ?? "価格未設定"}</CardTitle>
                 <CardDescription>税込み価格</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-5 h-5 text-green-500" />
-                    <span>PDF形式</span>
+                    <span>{exam.fileFormat}形式</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    <span>即時ダウンロード可能</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    <span>解答・解説付き</span>
-                  </div>
+                  {exam.hasAnswer && (
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <span>解答・解説付き</span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col gap-2">

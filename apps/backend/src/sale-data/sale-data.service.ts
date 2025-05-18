@@ -11,7 +11,7 @@ export class SaleDataService {
 
   async findOne(id: number) {
     return this.prisma.saleData.findUnique({
-      where: { saleDataId: Number(id)},
+      where: { id: Number(id)},
     });
   }
 
