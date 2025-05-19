@@ -34,6 +34,8 @@ interface SaleData {
   examUrl: string
   price: number
   description: string
+  fileFormat: string
+  hasAnswer: boolean
   createdAt: string
   updatedAt: string
 }
