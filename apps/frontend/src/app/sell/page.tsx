@@ -275,7 +275,7 @@ export default function SellPage() {
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="difficulty">卒業年度</Label>
+                        <Label htmlFor="difficulty">受講年度</Label>
                         <Input
                           id="difficulty"
                           placeholder="例：2024年"
