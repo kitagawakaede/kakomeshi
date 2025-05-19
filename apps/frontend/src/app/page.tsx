@@ -34,6 +34,8 @@ interface SaleData {
   examUrl: string
   price: number
   description: string
+  fileFormat: string
+  hasAnswer: boolean
   createdAt: string
   updatedAt: string
 }
@@ -110,7 +112,7 @@ export default function Home() {
                   <User className="w-5 h-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-56 bg-white">
                 <DropdownMenuLabel>マイアカウント</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>

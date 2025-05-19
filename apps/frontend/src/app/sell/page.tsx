@@ -97,6 +97,46 @@ export default function SellPage() {
     }
   }
 
+  const handleSubmit = async () => {
+    try {
+      if (!title || !universityName || !facultyName || !departmentName || !description || !price || uploadedFiles.length === 0) {
+        alert("必須項目を入力してください。")
+        return
+      }
+
+      const formData = new FormData()
+      formData.append("title", title)
+      formData.append("universityName", universityName)
+      formData.append("facultyName", facultyName)
+      formData.append("departmentName", departmentName)
+      formData.append("graduationYear", graduationYear)
+      formData.append("description", description)
+      formData.append("price", price.toString())
+      formData.append("hasAnswer", hasAnswers.toString())
+      formData.append("fileFormat", uploadedFiles[0].type.split('/')[1].toUpperCase())
+
+      // ファイルをアップロード
+      for (const file of uploadedFiles) {
+        formData.append("files", file)
+      }
+
+      const response = await fetch("http://localhost:3001/sale-data", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error("出品に失敗しました")
+      }
+
+      alert("出品が完了しました")
+      window.location.href = "/"
+    } catch (error) {
+      console.error("出品エラー:", error)
+      alert("出品に失敗しました。もう一度お試しください。")
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50">
       <header className="sticky top-0 z-10 bg-gradient-to-r from-sky-50 to-indigo-50 border-b">
@@ -235,7 +275,7 @@ export default function SellPage() {
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="difficulty">卒業年度</Label>
+                        <Label htmlFor="difficulty">受講年度</Label>
                         <Input
                           id="difficulty"
                           placeholder="例：2024年"
@@ -419,7 +459,6 @@ export default function SellPage() {
                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                               <div>
                                 <div className="flex items-center gap-2 mb-1">
-                                  <Badge variant="university">大学入試</Badge>
                                   {facultyName && <Badge variant="outline">{facultyName}</Badge>}
                                   {uploadedFiles.length > 0 && <Badge variant="success">新着</Badge>}
                                 </div>
@@ -449,7 +488,9 @@ export default function SellPage() {
                   >
                     戻る：コンテンツ
                   </Button>
-                  <Button className="bg-green-600 hover:bg-green-700 text-white">出品する</Button>
+                  <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleSubmit}>
+                    出品する
+                  </Button>
                 </CardFooter>
               </Card>
             </TabsContent>
