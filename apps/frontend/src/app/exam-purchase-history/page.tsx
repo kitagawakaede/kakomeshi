@@ -37,7 +37,7 @@ export default function ExamPurchaseHistoryPage() {
         <div className="container flex items-center justify-between h-16 px-4 mx-auto">
           <Link href="/" className="flex items-center gap-2 text-xl font-bold">
             <GraduationCap className="w-6 h-6" />
-            <span>過去問マスター</span>
+            <span>かこメシ</span>
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/cart">
@@ -567,8 +567,8 @@ export default function ExamPurchaseHistoryPage() {
       <footer className="py-6 border-t bg-white/80">
         <div className="container px-4 mx-auto">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-sm text-muted-foreground">&copy; 2024 過去問マスター. All rights reserved.</p>
-            <div className="flex gap-4 text-sm">
+            <p className="text-sm text-muted-foreground">&copy; 2025 かこメシ. All rights reserved.</p>
+            <div className="flex gap-4 text-sm">s
               <Link href="/about" className="text-muted-foreground hover:underline">
                 会社概要
               </Link>

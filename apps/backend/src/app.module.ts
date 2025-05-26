@@ -5,6 +5,7 @@ import { PrismaService } from './prisma/prisma.service';
 import { PrismaModule } from 'prisma/prisma.module';
 import { SaleDataModule } from './sale-data/sale-data.module';
 import { MulterModule } from '@nestjs/platform-express';
+import { CartModule } from './cart/cart.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { MulterModule } from '@nestjs/platform-express';
     MulterModule.register({
       dest: './uploads',
     }),
+    CartModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

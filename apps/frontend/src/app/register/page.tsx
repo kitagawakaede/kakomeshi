@@ -20,7 +20,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-md">
           <div className="mb-6 text-center">
             <h1 className="text-2xl font-bold">アカウント作成</h1>
-            <p className="text-sm text-muted-foreground mt-1">新規アカウントを作成して過去問マスターを始めましょう</p>
+            <p className="text-sm text-muted-foreground mt-1">新規アカウントを作成してかこメシを始めましょう</p>
           </div>
 
           <Card className="border-blue-100 shadow-md">
@@ -114,7 +114,7 @@ export default function RegisterPage() {
 
       <footer className="py-4 px-4 border-t bg-white/80">
         <div className="text-center text-xs text-muted-foreground">
-          &copy; 2024 過去問マスター. All rights reserved.
+          &copy; 2025 かこメシ. All rights reserved.
         </div>
       </footer>
     </div>

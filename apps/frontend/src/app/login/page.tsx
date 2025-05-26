@@ -24,7 +24,7 @@ export default function LoginPage() {
                 <Mail className="w-8 h-8 text-blue-600" />
               </div>
             </div>
-            <h1 className="text-2xl font-bold">過去問マスター</h1>
+            <h1 className="text-2xl font-bold">かこメシ</h1>
             <p className="text-sm text-muted-foreground mt-1">アカウントにログインして過去問を探索しましょう</p>
           </div>
 
@@ -101,7 +101,7 @@ export default function LoginPage() {
 
       <footer className="py-4 px-4 border-t bg-white/80">
         <div className="text-center text-xs text-muted-foreground">
-          &copy; 2024 過去問マスター. All rights reserved.
+          &copy; 2025 かこメシ. All rights reserved.
         </div>
       </footer>
     </div>
