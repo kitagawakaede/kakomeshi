@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/app/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs"
 import { ShoppingCart, GraduationCap, FileText, CheckCircle, BookOpen } from "lucide-react"
+import { useCart } from "@/app/contexts/CartContext"
 
 interface SaleData {
   id: number
@@ -29,6 +30,9 @@ export default function ExamDetailPage() {
   const params = useParams()
   const { id } = params as { id: string }
   const [exam, setExam] = useState<SaleData | null>(null)
+  const { addToCart, cartItems } = useCart()
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -41,7 +45,32 @@ export default function ExamDetailPage() {
       .catch((err) => console.error("詳細データ取得エラー:", err))
   }, [id])
 
+  // 商品がカートに既に存在するかチェック
+  const isInCart = (examId: number) => {
+    return cartItems.some(item => item.saleDataId === examId);
+  }
+
+  // カートに追加する処理
+  const handleAddToCart = async () => {
+    if (!exam) return;
+    setLoading(true);
+    
+    try {
+      await addToCart(exam.id, 1);
+      setSuccess(true);
+      
+      // 3秒後に成功メッセージを非表示にする
+      setTimeout(() => {
+        setSuccess(false);
+      }, 3000);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   if (!exam) return <div className="p-10 text-center text-muted-foreground">読み込み中...</div>
+
+  const inCart = isInCart(exam.id);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -49,12 +78,17 @@ export default function ExamDetailPage() {
         <div className="container flex items-center justify-between h-16 px-4 mx-auto">
           <Link href="/" className="flex items-center gap-2 text-xl font-bold">
             <GraduationCap className="w-6 h-6" />
-            <span>過去問マスター</span>
+            <span>かこメシ</span>
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/cart">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="relative">
                 <ShoppingCart className="w-5 h-5" />
+                {cartItems.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartItems.length}
+                  </span>
+                )}
                 <span className="sr-only">カート</span>
               </Button>
             </Link>
@@ -124,15 +158,45 @@ export default function ExamDetailPage() {
                     </div>
                   )}
                 </div>
+                {success && (
+                  <div className="bg-green-50 text-green-700 p-2 rounded border border-green-200 text-center">
+                    カートに追加しました！
+                  </div>
+                )}
+                {inCart && !loading && !success && (
+                  <div className="bg-blue-50 text-blue-700 p-2 rounded border border-blue-200 text-center">
+                    この商品はカートに追加済みです
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="flex flex-col gap-2">
-                <Button className="w-full">
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  カートに追加
+                <Button 
+                  className={`w-full ${inCart ? 'bg-gray-400 hover:bg-gray-500' : 'bg-indigo-400 hover:bg-indigo-500'} text-white`} 
+                  onClick={handleAddToCart} 
+                  disabled={inCart || loading}
+                >
+                  {loading ? (
+                    <span className="flex items-center">
+                      <span className="animate-spin h-4 w-4 mr-2 border-2 border-t-transparent rounded-full" />
+                      処理中...
+                    </span>
+                  ) : inCart ? (
+                    <span className="flex items-center">
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      カート追加済み
+                    </span>
+                  ) : (
+                    <span className="flex items-center">
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      カートに追加
+                    </span>
+                  )}
                 </Button>
-                <Button variant="outline" className="w-full">
-                  今すぐ購入
-                </Button>
+                <Link href="/cart" className="w-full">
+                  <Button variant="outline" className="w-full border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                    カートを見る
+                  </Button>
+                </Link>
               </CardFooter>
             </Card>
           </div>

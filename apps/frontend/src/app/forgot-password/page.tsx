@@ -63,7 +63,7 @@ export default function ForgotPasswordPage() {
 
       <footer className="py-4 px-4 border-t bg-white/80">
         <div className="text-center text-xs text-muted-foreground">
-          &copy; 2024 過去問マスター. All rights reserved.
+          &copy; 2025 かこメシ. All rights reserved.
         </div>
       </footer>
     </div>
