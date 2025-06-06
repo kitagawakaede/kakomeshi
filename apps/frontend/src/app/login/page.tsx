@@ -1,12 +1,82 @@
+'use client';
+
 import Link from "next/link"
 import { Button } from "@/app/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/app/components/ui/card"
 import { Input } from "@/app/components/ui/input"
 import { Checkbox } from "@/app/components/ui/checkbox"
 import { Label } from "@/app/components/ui/label"
-import { Mail, Lock, Github, ChromeIcon as Google, ArrowLeft } from "lucide-react"
+import { Mail, Lock, ChromeIcon as Google, ArrowLeft } from "lucide-react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { signInWithGoogle } from "@/lib/firebaseAuth"
+import { getPendingCartRequest } from '@/lib/pendingCartStorage';
+import { useCart } from "@/app/contexts/CartContext";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { addToCart } = useCart();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    // TODO: Firebaseでのログイン実装
+    console.log('Firebaseでのログインを実装予定', { email, password });
+    
+    setIsLoading(false);
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const user = await signInWithGoogle();
+      
+      // ログイン成功の処理（ユーザー情報がある場合のみ）
+      if (user) {
+        console.log("ログイン成功:", user.email);
+        
+        // 保存されたカート追加リクエストがあるか確認
+        const pendingRequest = getPendingCartRequest();
+        if (pendingRequest) {
+          console.log("保存されたカートリクエストを処理:", pendingRequest);
+          // 保存されたリクエストに基づいてカートに追加
+          // 注意: この処理はFirebaseUserContextでも行われます
+        }
+        
+        // 遅延してからリダイレクト
+        setTimeout(() => {
+          window.location.href = "/"; // router.pushの代わりにwindow.locationを使用
+        }, 1000);
+      } else {
+        // リダイレクト認証に切り替わった場合など、ユーザー情報がない場合
+        // この場合は何もしない（リダイレクト後に別ページで処理される）
+        console.log("リダイレクト認証に切り替わりました");
+      }
+    } catch (err: any) {
+      console.error("ログインエラー:", err);
+      
+      // エラーメッセージの詳細を表示
+      let errorMessage = "ログインに失敗しました。もう一度お試しください。";
+      
+      if (err.code === 'auth/popup-blocked') {
+        errorMessage = "ポップアップがブロックされました。ブラウザの設定を確認してください。";
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        errorMessage = "ログインプロセスがキャンセルされました。もう一度お試しください。";
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        errorMessage = "ログインポップアップが閉じられました。もう一度お試しください。";
+      }
+      
+      setError(errorMessage);
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50 flex flex-col">
       <header className="py-4 px-4 flex items-center">
@@ -30,7 +100,12 @@ export default function LoginPage() {
 
           <Card className="border-blue-100 shadow-md">
             <CardContent className="pt-6 space-y-4">
-              <div className="space-y-4">
+              {error && (
+                <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">メールアドレス</Label>
                   <div className="relative">
@@ -40,6 +115,8 @@ export default function LoginPage() {
                       placeholder="your@email.com"
                       type="email"
                       className="pl-10 h-12 border-blue-200 focus-visible:ring-blue-300 text-base"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                 </div>
@@ -56,6 +133,8 @@ export default function LoginPage() {
                       id="password"
                       type="password"
                       className="pl-10 h-12 border-blue-200 focus-visible:ring-blue-300 text-base"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                     />
                   </div>
                 </div>
@@ -63,9 +142,15 @@ export default function LoginPage() {
                   <Checkbox id="remember" className="h-5 w-5 rounded-md" />
                   <Label htmlFor="remember">ログイン状態を保持する</Label>
                 </div>
-              </div>
 
-              <Button className="w-full h-12 text-base bg-blue-600 hover:bg-blue-700">ログイン</Button>
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 text-base bg-blue-600 hover:bg-blue-700"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'ログイン中...' : 'ログイン'}
+                </Button>
+              </form>
 
               <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
@@ -77,13 +162,14 @@ export default function LoginPage() {
               </div>
 
               <div className="grid gap-3">
-                <Button variant="outline" className="h-12 border-blue-200 hover:bg-blue-50">
+                <Button 
+                  variant="outline" 
+                  className="h-12 border-blue-200 hover:bg-blue-50"
+                  onClick={handleGoogleLogin}
+                  disabled={isLoading}
+                >
                   <Google className="mr-2 h-5 w-5" />
                   Googleでログイン
-                </Button>
-                <Button variant="outline" className="h-12 border-blue-200 hover:bg-blue-50">
-                  <Github className="mr-2 h-5 w-5" />
-                  GitHubでログイン
                 </Button>
               </div>
             </CardContent>
