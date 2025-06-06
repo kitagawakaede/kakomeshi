@@ -74,7 +74,7 @@ export default function CartPage() {
         <div className="container flex items-center justify-between h-16 px-4 mx-auto">
           <Link href="/" className="flex items-center gap-2 text-xl font-bold">
             <GraduationCap className="w-6 h-6" />
-            <span>過去問マスター</span>
+            <span>かこメシ</span>
           </Link>
           <Button>ログイン</Button>
         </div>

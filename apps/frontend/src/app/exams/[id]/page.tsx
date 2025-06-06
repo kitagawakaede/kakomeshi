@@ -9,6 +9,9 @@ import { Badge } from "@/app/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs"
 import { ShoppingCart, GraduationCap, FileText, CheckCircle, BookOpen } from "lucide-react"
 import { useCart } from "@/app/contexts/CartContext"
+import { useFirebaseUserContext } from "@/app/contexts/FirebaseUserContext"
+import { signInWithGoogle } from "@/lib/firebaseAuth"
+import { savePendingCartRequest } from "@/lib/pendingCartStorage"
 
 interface SaleData {
   id: number
@@ -31,6 +34,7 @@ export default function ExamDetailPage() {
   const { id } = params as { id: string }
   const [exam, setExam] = useState<SaleData | null>(null)
   const { addToCart, cartItems } = useCart()
+  const { user, isAuthenticated } = useFirebaseUserContext()
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
@@ -56,6 +60,41 @@ export default function ExamDetailPage() {
     setLoading(true);
     
     try {
+      // 未ログインの場合、先にログイン処理を行う
+      if (!isAuthenticated) {
+        console.log("未ログイン状態でカート追加を試みました。ログイン処理を開始します。");
+        
+        // カート追加リクエストを保存
+        savePendingCartRequest(exam.id, 1);
+        
+        // ログイン処理を実行
+        const loggedInUser = await signInWithGoogle();
+        
+        // ログインが完了した場合 (リダイレクト認証に切り替わった場合は null が返される)
+        if (loggedInUser) {
+          // リダイレクトは FirebaseUserContext 内で自動的に行われるため、
+          // ここでは何もしない
+          console.log("ログインが完了しました。ホームページにリダイレクトします。");
+        }
+        
+        // ローディング状態を解除して処理を終了
+        setLoading(false);
+        return;
+      }
+      
+      // ログイン済みの場合は直接カートに追加
+      await actuallyAddToCart();
+    } catch (error) {
+      console.error("カート追加またはログイン処理中にエラーが発生しました:", error);
+      setLoading(false);
+    }
+  };
+  
+  // 実際のカート追加処理（ログイン済みであることが前提）
+  const actuallyAddToCart = async () => {
+    if (!exam) return;
+    
+    try {
       await addToCart(exam.id, 1);
       setSuccess(true);
       
@@ -66,7 +105,7 @@ export default function ExamDetailPage() {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   if (!exam) return <div className="p-10 text-center text-muted-foreground">読み込み中...</div>
 

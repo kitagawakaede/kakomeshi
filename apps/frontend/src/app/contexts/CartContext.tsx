@@ -2,6 +2,9 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
+import { useFirebaseUser } from '@/hooks/useFirebaseUser';
+import { useFirebaseUserContext } from './FirebaseUserContext';
+import { savePendingCartRequest } from '@/lib/pendingCartStorage';
 
 // APIのベースURL
 const API_BASE_URL = 'http://localhost:3001';
@@ -34,11 +37,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useFirebaseUser();
+  const { isAuthenticated, redirectToLogin } = useFirebaseUserContext();
 
   const fetchCartItems = async () => {
+    if (!user || !user.email) {
+      setCartItems([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await axios.get<CartItem[]>(`${API_BASE_URL}/cart`);
+      const response = await axios.get<CartItem[]>(`${API_BASE_URL}/cart`, {
+        params: { email: user.email }
+      });
       console.log('カートデータ取得:', response.data);
       
       if (Array.isArray(response.data)) {
@@ -59,17 +72,44 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    fetchCartItems();
-  }, []);
+    if (user) {
+      fetchCartItems();
+    } else {
+      setCartItems([]);
+      setLoading(false);
+    }
+  }, [user]);
 
   const refreshCart = async () => {
     await fetchCartItems();
   };
 
   const addToCart = async (saleDataId: number, quantity: number) => {
+    // 未ログインの場合はログイン画面に遷移
+    if (!isAuthenticated) {
+      console.log('未ログイン状態でカート追加:', { saleDataId, quantity });
+      
+      // カート追加リクエストを保存
+      savePendingCartRequest(saleDataId, quantity);
+      
+      // ログイン画面にリダイレクト
+      redirectToLogin();
+      
+      return Promise.resolve();
+    }
+    
+    if (!user || !user.email) {
+      setError('ログインが必要です');
+      return Promise.reject(new Error('ログインが必要です'));
+    }
+    
     try {
-      console.log('カートに追加:', { saleDataId, quantity });
-      const response = await axios.post(`${API_BASE_URL}/cart/add`, { saleDataId, quantity });
+      console.log('カートに追加:', { saleDataId, quantity, email: user.email });
+      const response = await axios.post(`${API_BASE_URL}/cart/add`, { 
+        saleDataId, 
+        quantity,
+        email: user.email
+      });
       console.log('カート追加レスポンス:', response.data);
       
       // 追加後に最新のカート情報を取得
@@ -85,9 +125,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const removeFromCart = async (cartItemId: number) => {
+    if (!user || !user.email) {
+      setError('ログインが必要です');
+      return Promise.reject(new Error('ログインが必要です'));
+    }
+    
     try {
       console.log('カートから削除リクエスト:', cartItemId);
-      const response = await axios.delete(`${API_BASE_URL}/cart/${cartItemId}`);
+      const response = await axios.delete(`${API_BASE_URL}/cart/${cartItemId}`, {
+        params: { email: user.email }
+      });
       console.log('カート削除レスポンス:', response.data);
       
       // 削除後に最新のカート情報を取得するのではなく、ローカルステートを更新
@@ -108,14 +155,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateQuantity = async (cartItemId: number, quantity: number) => {
+    if (!user || !user.email) {
+      setError('ログインが必要です');
+      return Promise.reject(new Error('ログインが必要です'));
+    }
+    
     if (quantity < 1) {
       setError('数量は1以上を指定してください');
       return;
     }
     
     try {
-      console.log('数量更新:', { cartItemId, quantity });
-      const response = await axios.post(`${API_BASE_URL}/cart/update/${cartItemId}`, { quantity });
+      console.log('数量更新:', { cartItemId, quantity, email: user.email });
+      const response = await axios.post(`${API_BASE_URL}/cart/update/${cartItemId}`, { 
+        quantity,
+        email: user.email
+      });
       console.log('数量更新レスポンス:', response.data);
       
       // 更新後に最新のカート情報を取得

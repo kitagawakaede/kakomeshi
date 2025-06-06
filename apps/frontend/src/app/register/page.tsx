@@ -1,3 +1,5 @@
+'use client';
+
 import Link from "next/link"
 import { Button } from "@/app/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/app/components/ui/card"
@@ -5,17 +7,30 @@ import { Input } from "@/app/components/ui/input"
 import { Checkbox } from "@/app/components/ui/checkbox"
 import { Label } from "@/app/components/ui/label"
 import { Mail, Lock, User, Github, ChromeIcon as Google, ArrowLeft } from "lucide-react"
+import { useState } from "react"
+import { signInWithGoogle } from "@/lib/firebaseAuth"
+import Header from "@/app/components/Header"
 
 export default function RegisterPage() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      await signInWithGoogle();
+      // ログイン成功後、ホームページにリダイレクト
+      window.location.href = "/";
+    } catch (error) {
+      console.error('Googleで登録エラー:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50 flex flex-col">
-      <header className="py-4 px-4 flex items-center">
-        <Link href="/" className="flex items-center gap-2">
-          <ArrowLeft className="w-5 h-5" />
-          <span className="text-sm font-medium">ホームに戻る</span>
-        </Link>
-      </header>
-
+      <Header />
+      
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="mb-6 text-center">
@@ -26,11 +41,20 @@ export default function RegisterPage() {
           <Card className="border-blue-100 shadow-md">
             <CardContent className="pt-6 space-y-4">
               <div className="grid gap-3">
-                <Button variant="outline" className="h-12 border-blue-200 hover:bg-blue-50">
+                <Button 
+                  variant="outline" 
+                  className="h-12 border-blue-200 hover:bg-blue-50"
+                  onClick={handleGoogleSignIn}
+                  disabled={isLoading}
+                >
                   <Google className="mr-2 h-5 w-5" />
                   Googleで登録
                 </Button>
-                <Button variant="outline" className="h-12 border-blue-200 hover:bg-blue-50">
+                <Button 
+                  variant="outline" 
+                  className="h-12 border-blue-200 hover:bg-blue-50"
+                  disabled={true}
+                >
                   <Github className="mr-2 h-5 w-5" />
                   GitHubで登録
                 </Button>
@@ -45,7 +69,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <form className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">お名前</Label>
                   <div className="relative">
@@ -79,26 +103,19 @@ export default function RegisterPage() {
                       className="pl-10 h-12 border-blue-200 focus-visible:ring-blue-300 text-base"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">8文字以上で、英字・数字を含めてください</p>
                 </div>
-                <div className="flex items-start space-x-2 py-2">
-                  <Checkbox id="terms" className="h-5 w-5 rounded-md mt-0.5" />
-                  <Label htmlFor="terms" className="leading-tight">
-                    <span>
-                      <Link href="/terms" className="text-blue-600 hover:text-blue-800">
-                        利用規約
-                      </Link>
-                      と
-                      <Link href="/privacy" className="text-blue-600 hover:text-blue-800 ml-1">
-                        プライバシーポリシー
-                      </Link>
-                      に同意します
-                    </span>
+                <div className="flex items-center space-x-2 py-2">
+                  <Checkbox id="terms" className="h-5 w-5 rounded-md" />
+                  <Label htmlFor="terms">
+                    <span>利用規約と</span>
+                    <Link href="/privacy-policy" className="text-blue-600 hover:text-blue-800 mx-1">
+                      プライバシーポリシー
+                    </Link>
+                    <span>に同意します</span>
                   </Label>
                 </div>
-              </div>
-
-              <Button className="w-full h-12 text-base bg-blue-600 hover:bg-blue-700 mt-2">アカウント作成</Button>
+                <Button className="w-full h-12 text-base bg-blue-600 hover:bg-blue-700" disabled={true}>アカウント作成</Button>
+              </form>
             </CardContent>
             <CardFooter className="flex justify-center pb-6 pt-2">
               <div className="text-center text-sm">
