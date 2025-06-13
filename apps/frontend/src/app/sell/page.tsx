@@ -13,13 +13,14 @@ import { Switch } from "@/app/components/ui/switch"
 import { Badge } from "@/app/components/ui/badge"
 import { Label } from "@/app/components/ui/label"
 import { GraduationCap, Upload, FileText, HelpCircle, ShoppingCart, BookOpen, AlertCircle, Info } from "lucide-react"
+import { useFirebaseUser } from "@/hooks/useFirebaseUser"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/app/components/ui/use-toast"
 
 export default function SellPage() {
   const [activeTab, setActiveTab] = useState("basic")
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [isDragging, setIsDragging] = useState(false)
-  const [hasAnswers, setHasAnswers] = useState(false)
-  const [hasCommentary, setHasCommentary] = useState(false)
   const [price, setPrice] = useState<number>(0)
   const [title, setTitle] = useState("")
   const [universityName, setUniversityName] = useState("")
@@ -28,6 +29,15 @@ export default function SellPage() {
   const [graduationYear, setGraduationYear] = useState("")
   const [description, setDescription] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { user, loading } = useFirebaseUser()
+  const router = useRouter()
+  const { toast } = useToast()
+
+  // ログイン状態をチェック
+  if (!loading && !user) {
+    // 非ログイン状態で出品ページにアクセスした場合はログインページにリダイレクト
+    router.push("/login")
+  }
 
   const calculateFee = (price: number) => {
     return Math.floor(price * 0.3)
@@ -99,8 +109,21 @@ export default function SellPage() {
 
   const handleSubmit = async () => {
     try {
+      // ログインチェック
+      if (!user || !user.email) {
+        toast({
+          title: "エラー",
+          description: "ログインが必要です",
+        })
+        router.push("/login")
+        return
+      }
+      
       if (!title || !universityName || !facultyName || !departmentName || !description || !price || uploadedFiles.length === 0) {
-        alert("必須項目を入力してください。")
+        toast({
+          title: "エラー",
+          description: "必須項目を入力してください",
+        })
         return
       }
 
@@ -112,8 +135,7 @@ export default function SellPage() {
       formData.append("graduationYear", graduationYear)
       formData.append("description", description)
       formData.append("price", price.toString())
-      formData.append("hasAnswer", hasAnswers.toString())
-      formData.append("fileFormat", uploadedFiles[0].type.split('/')[1].toUpperCase())
+      formData.append("email", user.email) // ユーザーのメールアドレスを追加
 
       // ファイルをアップロード
       for (const file of uploadedFiles) {
@@ -129,12 +151,27 @@ export default function SellPage() {
         throw new Error("出品に失敗しました")
       }
 
-      alert("出品が完了しました")
-      window.location.href = "/"
+      toast({
+        title: "成功",
+        description: "出品が完了しました",
+      })
+      router.push("/")
     } catch (error) {
       console.error("出品エラー:", error)
-      alert("出品に失敗しました。もう一度お試しください。")
+      toast({
+        title: "エラー",
+        description: "出品に失敗しました。もう一度お試しください。",
+      })
     }
+  }
+
+  // ローディング中の表示
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>読み込み中...</p>
+      </div>
+    )
   }
 
   return (
