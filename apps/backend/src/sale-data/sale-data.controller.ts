@@ -27,8 +27,7 @@ export class SaleDataController {
       graduationYear: string;
       description: string;
       price: number;
-      hasAnswer: string;
-      fileFormat: string;
+      email: string;
     },
     @UploadedFiles() files: { files?: Express.Multer.File[] },
   ) {

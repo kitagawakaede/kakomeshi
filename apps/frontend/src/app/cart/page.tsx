@@ -9,6 +9,7 @@ import { useCart } from "@/app/contexts/CartContext"
 import { Input } from "@/app/components/ui/input"
 import { useEffect, useState } from "react"
 import { useToast } from "@/app/components/ui/use-toast"
+import Header from "@/app/components/Header"
 
 export default function CartPage() {
   const { cartItems, loading, error, removeFromCart, updateQuantity, refreshCart } = useCart();
@@ -69,16 +70,8 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 bg-white border-b">
-        <div className="container flex items-center justify-between h-16 px-4 mx-auto">
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold">
-            <GraduationCap className="w-6 h-6" />
-            <span>かこメシ</span>
-          </Link>
-          <Button>ログイン</Button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50">
+      <Header />
 
       <main className="container px-4 py-8 mx-auto">
         <div className="flex flex-col gap-6">
@@ -103,14 +96,9 @@ export default function CartPage() {
                   <CardContent className="grid gap-4">
                     {cartItems.map((item) => (
                       <div key={item.id} className="flex items-start justify-between gap-4 py-4">
-                        <div className="flex items-start gap-4">
-                          <div className="w-16 h-16 bg-gray-100 rounded-md flex items-center justify-center shrink-0">
-                            <GraduationCap className="w-8 h-8 text-gray-400" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium">{item.saleData.title}</h3>
-                            <p className="text-sm text-muted-foreground">{item.saleData.fileFormat}形式</p>
-                          </div>
+                        <div>
+                          <h3 className="font-medium">{item.saleData.title}</h3>
+                          <p className="text-sm text-muted-foreground">{item.saleData.fileFormat}形式</p>
                         </div>
                         <div className="flex items-start gap-4">
                           <div className="flex items-center gap-2">

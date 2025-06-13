@@ -1,5 +1,6 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaClient } from "@prisma/client";
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -16,11 +17,19 @@ export class SaleDataService {
       graduationYear: string;
       description: string;
       price: number;
-      hasAnswer: string;
-      fileFormat: string;
+      email: string;
     },
     files: Express.Multer.File[],
   ) {
+    // ユーザーの取得
+    const user = await this.prisma.user.findUnique({
+      where: { email: createSaleDataDto.email },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`メールアドレス ${createSaleDataDto.email} のユーザーが見つかりません`);
+    }
+
     // ファイルを保存するディレクトリを作成
     const uploadDir = path.join(process.cwd(), 'uploads');
     if (!fs.existsSync(uploadDir)) {
@@ -38,12 +47,16 @@ export class SaleDataService {
     );
 
     // データベースに保存
+    const { email, ...dataWithoutEmail } = createSaleDataDto;
+    
     return this.prisma.saleData.create({
       data: {
-        ...createSaleDataDto,
-        price: Number(createSaleDataDto.price),
-        hasAnswer: createSaleDataDto.hasAnswer === 'true',
+        ...dataWithoutEmail,
+        price: Number(dataWithoutEmail.price),
         examUrl: fileUrls[0],
+        user: {
+          connect: { id: user.id }
+        }
       },
     });
   }

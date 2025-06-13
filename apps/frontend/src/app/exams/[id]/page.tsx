@@ -7,11 +7,12 @@ import { Button } from "@/app/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card"
 import { Badge } from "@/app/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs"
-import { ShoppingCart, GraduationCap, FileText, CheckCircle, BookOpen } from "lucide-react"
+import { ShoppingCart, GraduationCap, CheckCircle } from "lucide-react"
 import { useCart } from "@/app/contexts/CartContext"
 import { useFirebaseUserContext } from "@/app/contexts/FirebaseUserContext"
 import { signInWithGoogle } from "@/lib/firebaseAuth"
 import { savePendingCartRequest } from "@/lib/pendingCartStorage"
+import Header from "@/app/components/Header"
 
 interface SaleData {
   id: number
@@ -23,8 +24,6 @@ interface SaleData {
   examUrl: string
   price: number
   description: string
-  fileFormat: string
-  hasAnswer: boolean
   createdAt: string
   updatedAt: string
 }
@@ -112,29 +111,8 @@ export default function ExamDetailPage() {
   const inCart = isInCart(exam.id);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 bg-white border-b">
-        <div className="container flex items-center justify-between h-16 px-4 mx-auto">
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold">
-            <GraduationCap className="w-6 h-6" />
-            <span>かこメシ</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative">
-                <ShoppingCart className="w-5 h-5" />
-                {cartItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {cartItems.length}
-                  </span>
-                )}
-                <span className="sr-only">カート</span>
-              </Button>
-            </Link>
-            <Button>ログイン</Button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50">
+      <Header />
 
       <main className="container px-4 py-8 mx-auto">
         <div className="grid gap-6 md:grid-cols-3">
@@ -155,12 +133,6 @@ export default function ExamDetailPage() {
                   {new Date(exam.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000 && (
                     <Badge variant="success">新着</Badge>
                   )}
-                </div>
-              </div>
-
-              <div className="aspect-video bg-muted relative rounded-lg overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                  <BookOpen className="h-16 w-16 text-gray-400" />
                 </div>
               </div>
 
@@ -185,18 +157,6 @@ export default function ExamDetailPage() {
                 <CardDescription>税込み価格</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    <span>{exam.fileFormat}形式</span>
-                  </div>
-                  {exam.hasAnswer && (
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                      <span>解答・解説付き</span>
-                    </div>
-                  )}
-                </div>
                 {success && (
                   <div className="bg-green-50 text-green-700 p-2 rounded border border-green-200 text-center">
                     カートに追加しました！

@@ -41,8 +41,6 @@ interface SaleData {
   examUrl: string
   price: number
   description: string
-  fileFormat: string
-  hasAnswer: boolean
   createdAt: string
   updatedAt: string
 }
@@ -221,9 +219,6 @@ export default function Home() {
                   <Link href={`/exams/${exam.id}`}>
                     <Card className="h-full overflow-hidden transition-all hover:shadow-md border-blue-100">
                       <div className="flex">
-                        <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 relative flex items-center justify-center shrink-0">
-                          <BookOpen className="h-8 w-8 text-blue-500" />
-                        </div>
                         <div className="flex-1 p-3">
                           <div className="flex items-center gap-2 mb-1">
                             <Badge variant="outline">{exam.universityName}</Badge>
