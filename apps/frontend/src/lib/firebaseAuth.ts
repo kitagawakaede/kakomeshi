@@ -12,6 +12,10 @@ export const signInWithGoogle = async () => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
+      // デバッグ用：FirebaseのUIDを出力
+      console.log('Firebase UID:', user.uid);
+      console.log('Firebase Email:', user.email);
+      
       // ユーザー情報をバックエンドに送信して保存（エラーでも続行）
       if (user) {
         try {
@@ -57,6 +61,7 @@ const registerUserInDatabase = async (user: User) => {
   try {
     // ユーザーデータの準備
     const userData = {
+      id: user.uid, // FirebaseのUIDを使用
       email: user.email,
       name: user.displayName,
       photoURL: user.photoURL,

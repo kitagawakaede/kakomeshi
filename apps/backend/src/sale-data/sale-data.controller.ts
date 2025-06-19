@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, UploadedFiles, UseInterceptors, BadRequestException } from "@nestjs/common";
+import { Controller, Get, Param, Post, Body, UploadedFiles, UseInterceptors, BadRequestException, Delete, Put, ParseIntPipe } from "@nestjs/common";
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { SaleDataService } from "./sale-data.service";
 
@@ -11,8 +11,13 @@ export class SaleDataController {
     return this.saleDataService.findAll(); 
   }
 
+  @Get("user/:userId")
+  async findByUserId(@Param("userId") userId: string) {
+    return this.saleDataService.findByUserId(userId);
+  }
+
   @Get(":id")
-  async findOne(@Param("id") id: number) {
+  async findOne(@Param("id", ParseIntPipe) id: number) {
     return this.saleDataService.findOne(id);
   }
 
@@ -28,6 +33,7 @@ export class SaleDataController {
       description: string;
       price: number;
       email: string;
+      userId: string;
     },
     @UploadedFiles() files: { files?: Express.Multer.File[] },
   ) {
@@ -35,5 +41,26 @@ export class SaleDataController {
       throw new BadRequestException('ファイルがアップロードされていません');
     }
     return this.saleDataService.create(createSaleDataDto, files.files);
+  }
+
+  @Delete(":id")
+  async remove(@Param("id", ParseIntPipe) id: number) {
+    return this.saleDataService.remove(id);
+  }
+
+  @Put(":id")
+  async update(
+    @Param("id", ParseIntPipe) id: number,
+    @Body() updateSaleDataDto: {
+      title: string;
+      universityName: string;
+      facultyName: string;
+      departmentName: string;
+      graduationYear: string;
+      description: string;
+      price: number;
+    },
+  ) {
+    return this.saleDataService.update(id, updateSaleDataDto);
   }
 }

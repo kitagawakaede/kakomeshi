@@ -153,7 +153,7 @@ export default function ExamDetailPage() {
           <div>
             <Card className="sticky top-24">
               <CardHeader>
-                <CardTitle className="text-2xl font-bold">¥{exam.price.toLocaleString() ?? "価格未設定"}</CardTitle>
+                <CardTitle className="text-2xl font-bold">¥{exam.price ? exam.price.toLocaleString() : "価格未設定"}</CardTitle>
                 <CardDescription>税込み価格</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

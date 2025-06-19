@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class CartService {
   constructor(private prisma: PrismaService) {}
 
-  async getCartItems(userId: number) {
+  async getCartItems(userId: string) {
     console.log(`ユーザーID ${userId} のカートアイテムを取得します`);
     
     // ユーザーの存在確認
@@ -29,7 +29,7 @@ export class CartService {
     return cartItems;
   }
 
-  async addToCart(userId: number, saleDataId: number, quantity: number) {
+  async addToCart(userId: string, saleDataId: number, quantity: number) {
     console.log(`カートに追加: ユーザーID=${userId}, 商品ID=${saleDataId}, 数量=${quantity}`);
     
     // ユーザーの存在確認
@@ -92,7 +92,7 @@ export class CartService {
     }
   }
 
-  async removeFromCart(userId: number, cartItemId: number) {
+  async removeFromCart(userId: string, cartItemId: number) {
     console.log(`カートから削除: ユーザーID=${userId}, カートアイテムID=${cartItemId}`);
     
     const cartItem = await this.prisma.cartItem.findFirst({
@@ -115,7 +115,7 @@ export class CartService {
     });
   }
 
-  async updateQuantity(userId: number, cartItemId: number, quantity: number) {
+  async updateQuantity(userId: string, cartItemId: number, quantity: number) {
     console.log(`数量更新: ユーザーID=${userId}, カートアイテムID=${cartItemId}, 数量=${quantity}`);
     
     if (quantity < 1) {

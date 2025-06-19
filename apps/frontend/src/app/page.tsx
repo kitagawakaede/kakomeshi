@@ -29,6 +29,7 @@ import Header from "@/app/components/Header"
 import { getPendingCartRequest, clearPendingCartRequest, savePendingCartRequest } from '@/lib/pendingCartStorage';
 import { useFirebaseUserContext } from './contexts/FirebaseUserContext';
 import { signInWithGoogle } from "@/lib/firebaseAuth"
+import { useRouter } from "next/navigation"
 
 // 型定義
 interface SaleData {
@@ -55,6 +56,7 @@ export default function Home() {
   const { toast } = useToast()
   const { isAuthenticated } = useFirebaseUserContext();
   const [loadingItemId, setLoadingItemId] = useState<number | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     fetch("http://localhost:3001/sale-data")
@@ -200,6 +202,15 @@ export default function Home() {
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <h2 className="text-2xl font-bold">検索</h2>
+            <div className="flex justify-end">
+              <Button
+                onClick={() => router.push('/my-listings')}
+                className="bg-indigo-500 hover:bg-indigo-600"
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                出品した商品一覧
+              </Button>
+            </div>
           </div>
 
           <div className="relative mb-4">

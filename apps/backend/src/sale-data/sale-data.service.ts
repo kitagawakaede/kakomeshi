@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
-import { PrismaClient } from "@prisma/client";
 import * as fs from 'fs';
 import * as path from 'path';
+import { Express } from 'express';
 
 @Injectable()
 export class SaleDataService {
@@ -18,6 +18,7 @@ export class SaleDataService {
       description: string;
       price: number;
       email: string;
+      userId: string;
     },
     files: Express.Multer.File[],
   ) {
@@ -47,7 +48,7 @@ export class SaleDataService {
     );
 
     // データベースに保存
-    const { email, ...dataWithoutEmail } = createSaleDataDto;
+    const { email, userId, ...dataWithoutEmail } = createSaleDataDto;
     
     return this.prisma.saleData.create({
       data: {
@@ -62,12 +63,102 @@ export class SaleDataService {
   }
 
   async findAll() {
-    return this.prisma.saleData.findMany(); 
+    return this.prisma.saleData.findMany({
+      include: {
+        user: true,
+      },
+    });
   }
 
   async findOne(id: number) {
     return this.prisma.saleData.findUnique({
-      where: { id: Number(id) },
+      where: { id },
+      include: {
+        user: true,
+      },
+    });
+  }
+
+  async findByUserId(userId: string) {
+    return this.prisma.saleData.findMany({
+      where: {
+        userId: userId,
+      },
+      include: {
+        user: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  async update(
+    id: number,
+    updateSaleDataDto: {
+      title: string;
+      universityName: string;
+      facultyName: string;
+      departmentName: string;
+      graduationYear: string;
+      description: string;
+      price: number;
+      // examUrl: string; // 必要なら追加
+    },
+  ) {
+    const saleData = await this.prisma.saleData.findUnique({
+      where: { id },
+    });
+
+    if (!saleData) {
+      throw new NotFoundException(`Sale data with ID ${id} not found`);
+    }
+
+    // 不要なフィールドが混ざらないように明示的に指定
+    return this.prisma.saleData.update({
+      where: { id },
+      data: {
+        title: updateSaleDataDto.title,
+        universityName: updateSaleDataDto.universityName,
+        facultyName: updateSaleDataDto.facultyName,
+        departmentName: updateSaleDataDto.departmentName,
+        graduationYear: updateSaleDataDto.graduationYear,
+        description: updateSaleDataDto.description,
+        price: updateSaleDataDto.price,
+        // examUrl: updateSaleDataDto.examUrl, // 必要なら追加
+      },
+    });
+  }
+
+  async remove(id: number) {
+    const saleData = await this.prisma.saleData.findUnique({
+      where: { id },
+    });
+
+    if (!saleData) {
+      throw new NotFoundException(`Sale data with ID ${id} not found`);
+    }
+
+    // CartItemを先に削除
+    await this.prisma.cartItem.deleteMany({
+      where: { saleDataId: id },
+    });
+
+    // ファイルを削除
+    if (saleData.examUrl) {
+      try {
+        const filePath = path.join(process.cwd(), saleData.examUrl);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (error) {
+        console.error('ファイル削除エラー:', error);
+        // ファイル削除に失敗してもデータベースからは削除する
+      }
+    }
+
+    return this.prisma.saleData.delete({
+      where: { id },
     });
   }
 }
