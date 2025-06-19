@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Param, ParseIntPipe, Query, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Query, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { UsersService } from '../users/users.service';
 
@@ -43,7 +43,7 @@ export class CartController {
 
   @Delete(':id')
   async removeFromCart(
-    @Param('id', ParseIntPipe) cartItemId: number,
+    @Param('id') cartItemId: number,
     @Query('email') email: string
   ) {
     if (!email) {
@@ -64,7 +64,7 @@ export class CartController {
 
   @Post('update/:id')
   async updateQuantity(
-    @Param('id', ParseIntPipe) cartItemId: number,
+    @Param('id') cartItemId: number,
     @Body() body: { quantity: number; email: string },
   ) {
     if (!body.email) {

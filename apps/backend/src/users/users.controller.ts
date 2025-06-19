@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Query, NotFoundException } from '@nestjs/common';
+import { Body, Controller, Post, Get, Query, Param, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 
 @Controller('api/users')
@@ -6,7 +6,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  async createUser(@Body() userData: { email: string; name?: string; photoURL?: string }) {
+  async createUser(@Body() userData: { id: string; email: string; name?: string; photoURL?: string }) {
     return this.usersService.createOrUpdateUser(userData);
   }
 
@@ -17,6 +17,21 @@ export class UsersController {
     }
 
     const user = await this.usersService.getUserByEmail(email);
+    
+    if (!user) {
+      throw new NotFoundException('ユーザーが見つかりません');
+    }
+    
+    return user;
+  }
+
+  @Get('by-id/:id')
+  async getUserById(@Param('id') id: string) {
+    if (!id) {
+      throw new NotFoundException('ユーザーIDが指定されていません');
+    }
+
+    const user = await this.usersService.getUserById(id);
     
     if (!user) {
       throw new NotFoundException('ユーザーが見つかりません');

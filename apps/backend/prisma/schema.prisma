@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id        Int        @id @default(autoincrement())
+  id        String     @id @default(uuid())
   email     String     @unique
   name      String?
   createdAt DateTime   @default(now())
@@ -20,7 +20,7 @@ model User {
 
 model CartItem {
   id         Int      @id @default(autoincrement())
-  userId     Int
+  userId     String
   saleDataId Int
   quantity   Int      @default(1)
   createdAt  DateTime @default(now())
@@ -43,7 +43,7 @@ model SaleData {
   id             Int        @id @default(autoincrement())
   title          String
   updatedAt      DateTime   @updatedAt
-  userId         Int
+  userId         String
   cartItems      CartItem[]
   user           User       @relation(fields: [userId], references: [id])
 }
